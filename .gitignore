@@ -2,3 +2,5 @@
 __pycach__/
 testdb.py
 testbase.py
+
+venv/
