@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Spritle CRM | Outreacher Workspace</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+    body { background-color: #08080c; color: #ffffff; min-height: 100vh; display: flex; flex-direction: column; }
+    .navbar { background: #111118; border-bottom: 1px solid #222230; padding: 16px 32px; display: flex; justify-content: space-between; align-items: center; }
+    .logo-spritle { font-size: 22px; font-weight: 800; background: linear-gradient(90deg, #14aed5, #76dc00); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .user-badge { background: #1e1e2d; padding: 6px 14px; border-radius: 20px; font-size: 13px; color: #aaaabb; border: 1px solid #2d2d3f; }
+    .btn-logout { background: transparent; border: 1px solid #ff4444; color: #ff4444; padding: 6px 14px; border-radius: 8px; cursor: pointer; font-size: 13px; margin-left: 12px; }
+    
+    .dashboard-container { padding: 32px; max-width: 1200px; margin: 0 auto; width: 100%; display: flex; flex-direction: column; gap: 24px; }
+    .panel-card { background: #111118; border: 1px solid #222230; border-radius: 16px; padding: 24px; }
+    .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+    .panel-header h3 { font-size: 18px; color: #ffffff; }
+
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
+    th { text-align: left; color: #888899; padding: 12px; border-bottom: 1px solid #222230; font-weight: 500; }
+    td { padding: 14px 12px; border-bottom: 1px solid #1a1a26; color: #cccccc; }
+
+    select.status-select { background: #08080c; border: 1px solid #2a2a3a; color: #14aed5; padding: 6px 12px; border-radius: 8px; font-size: 13px; outline: none; cursor: pointer; }
+    select.status-select:focus { border-color: #14aed5; }
+
+    .btn-action { background: linear-gradient(90deg, #14aed5, #0088cc); color: white; border: none; padding: 8px 16px; border-radius: 8px; font-weight: 600; font-size: 13px; cursor: pointer; }
+    
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; z-index: 100; }
+    .modal-card { background: #111118; border: 1px solid #222230; border-radius: 16px; padding: 28px; width: 360px; }
+    .modal-card h3 { margin-bottom: 16px; font-size: 18px; }
+    .modal-card input { width: 100%; padding: 10px; margin-bottom: 14px; background: #08080c; border: 1px solid #2a2a3a; border-radius: 8px; color: white; outline: none; }
+    
+    .presence-dot { height: 8px; width: 8px; background-color: #76dc00; border-radius: 50%; display: inline-block; margin-right: 6px; }
+  </style>
+</head>
+<body>
+
+  <header class="navbar">
+    <div class="logo-spritle">SPRITLE CRM <span style="font-size: 12px; color: #888899; font-weight: 400;">| Outreacher Workspace</span></div>
+    <div>
+      <span class="user-badge" id="user-name"><span class="presence-dot"></span>Outreacher</span>
+      <button class="btn-action" style="margin-left: 10px;" id="open-pass-modal">Change Password</button>
+      <button class="btn-logout" id="logout-btn">Logout</button>
+    </div>
+  </header>
+
+  <main class="dashboard-container">
+    <div class="panel-card">
+      <div class="panel-header">
+        <h3>Assigned Leads Workspace</h3>
+        <span style="font-size: 12px; color: #aaaabb;">● Live Workspace (Sync Every 3s)</span>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email / Phone</th>
+            <th>Requirement</th>
+            <th>Current Status</th>
+            <th>Update Status</th>
+          </tr>
+        </thead>
+        <tbody id="leads-table-body">
+          <!-- Dynamically populated -->
+        </tbody>
+      </table>
+    </div>
+  </main>
+
+  <!-- PASSWORD CHANGE MODAL -->
+  <div class="modal-overlay" id="pass-modal">
+    <div class="modal-card">
+      <h3>Change Password</h3>
+      <input type="password" id="old-pass" placeholder="Current Password" />
+      <input type="password" id="new-pass" placeholder="New Password" />
+      <div style="display: flex; gap: 10px;">
+        <button class="btn-action" style="flex: 1;" id="save-pass-btn">Update</button>
+        <button class="btn-action" style="flex: 1; background: #222230;" id="close-pass-btn">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = "http://127.0.0.1:8000";
+
+    if (localStorage.getItem("userRole") !== "telecaller") {
+      window.location.href = "login.html";
+    }
+
+    const userId = localStorage.getItem("userId");
+    document.getElementById("user-name").innerHTML = `<span class="presence-dot"></span>${localStorage.getItem("userName") || "Outreacher"}`;
+
+    // RIGID PRESENCE ENGINE
+    let heartbeatInterval = null;
+
+    function sendHeartbeat() {
+      if (!userId || document.hidden) return;
+      fetch(`${API_BASE}/api/telecaller/heartbeat?telecaller_id=${userId}`, { method: 'POST' })
+        .catch(e => console.error("Heartbeat error", e));
+    }
+
+    function sendOfflineSignal() {
+      if (!userId) return;
+      // sendBeacon guarantees delivery even if tab is instantly closed
+      navigator.sendBeacon(`${API_BASE}/api/telecaller/set-offline?telecaller_id=${userId}`);
+    }
+
+    // High frequency 2-second heartbeat loop
+    heartbeatInterval = setInterval(sendHeartbeat, 2000);
+    sendHeartbeat();
+
+    // RIGID TAB VISIBILITY DETECTOR: Instantly goes offline when switching tabs
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) {
+        sendOfflineSignal();
+      } else {
+        sendHeartbeat();
+      }
+    });
+
+    // Unload/Close trigger
+    window.addEventListener("beforeunload", sendOfflineSignal);
+
+    // Logout Button
+    document.getElementById("logout-btn").addEventListener("click", () => {
+      sendOfflineSignal();
+      localStorage.clear();
+      window.location.href = "login.html";
+    });
+
+    // Password Modal
+    const passModal = document.getElementById("pass-modal");
+    document.getElementById("open-pass-modal").addEventListener("click", () => passModal.style.display = "flex");
+    document.getElementById("close-pass-btn").addEventListener("click", () => passModal.style.display = "none");
+
+    // Fetch Leads
+    async function loadAssignedLeads() {
+      if (!userId) return;
+      try {
+        const res = await fetch(`${API_BASE}/api/telecaller/leads?user_id=${userId}`);
+        const data = await res.json();
+        
+        const tbody = document.getElementById("leads-table-body");
+
+        if (!data.leads || data.leads.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #666;">No leads currently assigned.</td></tr>`;
+          return;
+        }
+
+        tbody.innerHTML = data.leads.map(lead => `
+          <tr>
+            <td style="font-weight: 600; color: #fff;">${lead.name || 'N/A'}</td>
+            <td>${lead.email || ''}<br><span style="font-size: 11px; color: #666;">${lead.phone || ''}</span></td>
+            <td>${lead.requirements || 'N/A'}</td>
+            <td><span style="color: #14aed5; font-weight: 600;">${lead.status || 'New Inquiry'}</span></td>
+            <td>
+              <select class="status-select" onchange="updateLeadStatus(${lead.id}, this.value)">
+                <option value="New Inquiry" ${lead.status === 'New Inquiry' ? 'selected' : ''}>New Inquiry</option>
+                <option value="Pending" ${lead.status === 'Pending' ? 'selected' : ''}>Pending</option>
+                <option value="Outreach Done" ${lead.status === 'Outreach Done' ? 'selected' : ''}>Outreach Done</option>
+                <option value="In Progress" ${lead.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
+                <option value="Project Delivered" ${lead.status === 'Project Delivered' ? 'selected' : ''}>Project Delivered</option>
+                <option value="Closed" ${lead.status === 'Closed' ? 'selected' : ''}>Closed</option>
+              </select>
+            </td>
+          </tr>
+        `).join('');
+      } catch (err) {
+        console.error("Error loading assigned leads:", err);
+      }
+    }
+
+    loadAssignedLeads();
+    setInterval(loadAssignedLeads, 3000); // 3-second live sync
+
+    // Update Status
+    async function updateLeadStatus(leadId, newStatus) {
+      try {
+        const res = await fetch(`${API_BASE}/api/telecaller/update-status`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            lead_id: leadId,
+            status: newStatus,
+            telecaller_id: userId,
+            telecaller_name: localStorage.getItem("userName")
+          })
+        });
+        if (res.ok) {
+          loadAssignedLeads();
+        }
+      } catch (e) {
+        alert("Failed to update status.");
+      }
+    }
+
+    // Change Password
+    document.getElementById("save-pass-btn").addEventListener("click", async () => {
+      const oldPassword = document.getElementById("old-pass").value;
+      const newPassword = document.getElementById("new-pass").value;
+
+      if (!oldPassword || !newPassword) return alert("Please fill both password fields.");
+
+      try {
+        const res = await fetch(`${API_BASE}/api/telecaller/change-password`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ telecaller_id: userId, old_password: oldPassword, new_password: newPassword })
+        });
+
+        if (res.ok) {
+          alert("Password updated successfully.");
+          document.getElementById("old-pass").value = "";
+          document.getElementById("new-pass").value = "";
+          passModal.style.display = "none";
+        } else {
+          alert("Incorrect current password.");
+        }
+      } catch (e) {
+        alert("Error changing password.");
+      }
+    });
+  </script>
+</body>
+</html>

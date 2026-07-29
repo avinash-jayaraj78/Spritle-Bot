@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Spritle Software | AI-First Software Development</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <header class="navbar">
+    <div class="nav-container">
+      <div class="logo">
+        <span class="logo-spritle">SPRITLE</span>
+      </div>
+      <nav class="nav-links">
+        <a href="#">SpritleOneAI</a>
+        <a href="#">Services ▾</a>
+        <a href="#">Solutions ▾</a>
+        <a href="#">Industries ▾</a>
+        <a href="#">Works</a>
+        <a href="#">About</a>
+        <a href="#">Knowledge ▾</a>
+        <a href="#">Career</a>
+        <a href="#" class="btn-contact">Contact Us</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- HERO SECTION -->
+  <main class="hero">
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+      <h1>In the AI–First World, We're<br>Already Home</h1>
+    </div>
+
+    <!-- CHATBOT WIDGET MATCHING SCREENSHOT -->
+    <div id="chat-widget" class="chat-widget">
+      
+      <!-- Top Toggle Arrow Button -->
+      <button id="toggle-btn" class="chat-toggle-circle" aria-label="Toggle chat">
+        <svg viewBox="0 0 24 24" class="arrow-icon"><path fill="currentColor" d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg>
+      </button>
+
+      <!-- Chat Window Card -->
+      <div id="chat-card" class="chat-card">
+        <!-- Bright Sky-Blue Header -->
+        <div class="chat-header">
+          <div class="avatar-container">
+            <div class="bot-avatar">🤖</div>
+          </div>
+          <div class="header-text">
+            <h3>Spritle Bot</h3>
+            <p>Spritle welcomes you..Happy to ...</p>
+          </div>
+        </div>
+
+        <!-- Message Body (White Background) -->
+        <div id="chat-messages" class="chat-body">
+          <div class="message-group bot-group">
+            <span class="sender-name">Spritle Bot</span>
+            <div class="chat-bubble bot-bubble">
+              Welcome to Spritle Software!<br>How can I help you today?
+            </div>
+          </div>
+        </div>
+
+        <!-- Input Area -->
+        <div class="chat-footer">
+          <input type="text" id="user-input" placeholder="Choose an option" autocomplete="off" />
+          <button id="send-btn" class="send-trigger">➤</button>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

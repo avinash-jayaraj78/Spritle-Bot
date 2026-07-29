@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Spritle CRM | Login</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', sans-serif;
+    }
+    body {
+      background-color: #08080c;
+      color: #ffffff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .login-card {
+      background: #111118;
+      border: 1px solid #222230;
+      border-radius: 20px;
+      padding: 40px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+    .logo-container {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+    .logo-spritle {
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      background: linear-gradient(90deg, #14aed5, #76dc00);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .subtitle {
+      color: #888899;
+      font-size: 14px;
+      margin-top: 6px;
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      font-size: 13px;
+      color: #aaaabb;
+      margin-bottom: 8px;
+      font-weight: 500;
+    }
+    input {
+      width: 100%;
+      padding: 12px 16px;
+      background-color: #08080c;
+      border: 1px solid #2a2a3a;
+      border-radius: 10px;
+      color: #fff;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input:focus {
+      border-color: #14aed5;
+    }
+    .btn-login {
+      width: 100%;
+      padding: 12px;
+      background: linear-gradient(90deg, #14aed5, #0088cc);
+      border: none;
+      border-radius: 10px;
+      color: #fff;
+      font-weight: 600;
+      font-size: 15px;
+      cursor: pointer;
+      margin-top: 10px;
+      transition: opacity 0.2s;
+    }
+    .btn-login:hover {
+      opacity: 0.9;
+    }
+    .error-msg {
+      color: #ff5555;
+      font-size: 13px;
+      margin-top: 12px;
+      text-align: center;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="login-card">
+    <div class="logo-container">
+      <span class="logo-spritle">SPRITLE</span>
+      <p class="subtitle">Outreach & Lead Portal</p>
+    </div>
+
+    <form id="login-form">
+      <div class="form-group">
+        <label for="email">Email Address / Admin ID</label>
+        <input type="email" id="email" placeholder="e.g. admin@spritle.com" required autocomplete="off" />
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input type="password" id="password" placeholder="••••••••" required />
+      </div>
+
+      <button type="submit" class="btn-login">Sign In</button>
+      <div id="error-msg" class="error-msg">Invalid email or password</div>
+    </form>
+  </div>
+
+  <script>
+    document.getElementById("login-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+      const errorMsg = document.getElementById("error-msg");
+
+      errorMsg.style.display = "none";
+
+      try {
+        const response = await fetch("http://127.0.0.1:8000/api/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password })
+        });
+
+        if (!response.ok) throw new Error("Login failed");
+
+        const data = await response.json();
+
+        // Save session info in localStorage
+        localStorage.setItem("userRole", data.role);
+        localStorage.setItem("userName", data.name);
+        if (data.user_id) localStorage.setItem("userId", data.user_id);
+        if (data.email) localStorage.setItem("userEmail", data.email);
+
+        // Redirect based on role
+        if (data.role === "admin") {
+          window.location.href = "dashboard-admin.html";
+        } else if (data.role === "telecaller") {
+          window.location.href = "dashboard-tele.html";
+        }
+      } catch (err) {
+        errorMsg.style.display = "block";
+      }
+    });
+  </script>
+</body>
+</html>

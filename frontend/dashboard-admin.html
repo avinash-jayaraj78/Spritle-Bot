@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Spritle CRM | Master Admin Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+    body { background-color: #08080c; color: #ffffff; min-height: 100vh; display: flex; flex-direction: column; }
+    
+    .navbar { background: #111118; border-bottom: 1px solid #222230; padding: 16px 32px; display: flex; justify-content: space-between; align-items: center; }
+    .logo-spritle { font-size: 22px; font-weight: 800; background: linear-gradient(90deg, #14aed5, #76dc00); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .user-badge { background: #1e1e2d; padding: 6px 14px; border-radius: 20px; font-size: 13px; color: #aaaabb; border: 1px solid #2d2d3f; }
+    .btn-logout { background: transparent; border: 1px solid #ff4444; color: #ff4444; padding: 6px 14px; border-radius: 8px; cursor: pointer; font-size: 13px; margin-left: 12px; }
+
+    .dashboard-container { padding: 32px; max-width: 1400px; margin: 0 auto; width: 100%; display: flex; flex-direction: column; gap: 28px; }
+
+    .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; }
+    .metric-card { background: #111118; border: 1px solid #222230; border-radius: 16px; padding: 20px; }
+    .metric-card h4 { color: #888899; font-size: 13px; font-weight: 500; margin-bottom: 8px; }
+    .metric-card p { font-size: 28px; font-weight: 700; color: #ffffff; }
+
+    .charts-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+    .chart-card { background: #111118; border: 1px solid #222230; border-radius: 16px; padding: 20px; height: 320px; }
+    .chart-card h3 { font-size: 16px; margin-bottom: 12px; color: #dddde3; }
+    .chart-container { position: relative; height: 240px; width: 100%; }
+
+    .section-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .panel-card { background: #111118; border: 1px solid #222230; border-radius: 16px; padding: 24px; }
+    .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+    .panel-header h3 { font-size: 16px; color: #ffffff; }
+
+    .btn-action { background: linear-gradient(90deg, #14aed5, #0088cc); color: white; border: none; padding: 8px 16px; border-radius: 8px; font-weight: 600; font-size: 13px; cursor: pointer; }
+    .btn-secondary { background: #222230; color: #aaaabb; border: 1px solid #333344; padding: 6px 12px; border-radius: 8px; font-size: 12px; cursor: pointer; }
+    
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
+    th { text-align: left; color: #888899; padding: 10px; border-bottom: 1px solid #222230; font-weight: 500; }
+    td { padding: 12px 10px; border-bottom: 1px solid #1a1a26; color: #cccccc; }
+    
+    .status-badge { padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; display: inline-block; }
+    .status-active { background: rgba(118, 220, 0, 0.15); color: #76dc00; border: 1px solid rgba(118, 220, 0, 0.3); }
+    .status-offline { background: rgba(255, 68, 68, 0.15); color: #ff4444; border: 1px solid rgba(255, 68, 68, 0.3); }
+
+    .clickable-row { cursor: pointer; transition: background 0.2s; }
+    .clickable-row:hover { background: #181824; }
+
+    .btn-sm { padding: 4px 8px; font-size: 11px; border-radius: 6px; border: 1px solid #333344; background: #1a1a26; color: #14aed5; cursor: pointer; }
+
+    .audit-list { display: flex; flex-direction: column; gap: 12px; max-height: 280px; overflow-y: auto; }
+    .audit-item { background: #0a0a10; border-left: 3px solid #14aed5; padding: 10px 14px; border-radius: 0 8px 8px 0; }
+    .audit-item .audit-title { font-size: 12px; font-weight: 600; color: #ffffff; display: flex; justify-content: space-between; }
+    .audit-item .audit-time { color: #666677; font-weight: 400; font-size: 11px; }
+    .audit-item .audit-desc { font-size: 12px; color: #aaaabb; margin-top: 4px; }
+
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.75); display: none; justify-content: center; align-items: center; z-index: 100; }
+    .modal-card { background: #111118; border: 1px solid #222230; border-radius: 16px; padding: 28px; width: 480px; max-height: 85vh; overflow-y: auto; }
+    .modal-card.wide { width: 720px; }
+    .modal-card h3 { margin-bottom: 16px; font-size: 18px; }
+    .modal-card input { width: 100%; padding: 10px; margin-bottom: 14px; background: #08080c; border: 1px solid #2a2a3a; border-radius: 8px; color: white; outline: none; }
+  </style>
+</head>
+<body>
+
+  <header class="navbar">
+    <div class="logo-spritle">SPRITLE CRM <span style="font-size: 12px; color: #888899; font-weight: 400;">| Master Dashboard</span></div>
+    <div>
+      <span class="user-badge" id="admin-name">Admin</span>
+      <button class="btn-logout" id="logout-btn">Logout</button>
+    </div>
+  </header>
+
+  <main class="dashboard-container">
+
+    <section class="metrics-grid">
+      <div class="metric-card">
+        <h4>Total Leads Registered</h4>
+        <p id="stat-total-leads">0</p>
+      </div>
+      <div class="metric-card">
+        <h4>Active Outreachers (Live)</h4>
+        <p id="stat-telecallers">0</p>
+      </div>
+      <div class="metric-card">
+        <h4>Projects Delivered</h4>
+        <p id="stat-delivered">0</p>
+      </div>
+      <div class="metric-card">
+        <h4>Pending Outreach</h4>
+        <p id="stat-pending">0</p>
+      </div>
+    </section>
+
+    <section class="charts-grid">
+      <div class="chart-card">
+        <h3>Lead Status Distribution</h3>
+        <div class="chart-container">
+          <canvas id="statusChart"></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <h3>System Conversion Breakdown</h3>
+        <div class="chart-container">
+          <canvas id="conversionChart"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-grid">
+      
+      <div class="panel-card">
+        <div class="panel-header">
+          <h3>Outreachers Status (3s Dynamic Refresh)</h3>
+          <button class="btn-action" id="open-add-modal">+ Add Outreacher</button>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Live Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="telecallers-table-body">
+            <!-- Dynamically populated -->
+          </tbody>
+        </table>
+      </div>
+
+      <div class="panel-card">
+        <div class="panel-header">
+          <h3>Immutable Audit Log Stream</h3>
+          <button class="btn-secondary" id="open-logs-modal">View Full Logs</button>
+        </div>
+        <div class="audit-list" id="audit-log-stream">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- MODALS -->
+  <div class="modal-overlay" id="telecaller-modal">
+    <div class="modal-card">
+      <h3>Add New Outreacher</h3>
+      <input type="text" id="new-tc-name" placeholder="Full Name" />
+      <input type="email" id="new-tc-email" placeholder="Email Address" />
+      <input type="password" id="new-tc-password" placeholder="Initial Password" />
+      <div style="display: flex; gap: 10px; margin-top: 10px;">
+        <button class="btn-action" style="flex: 1;" id="save-tc-btn">Create Profile</button>
+        <button class="btn-secondary" style="flex: 1;" id="close-modal-btn">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="profile-modal">
+    <div class="modal-card wide">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3 id="profile-modal-title">Outreacher Profile</h3>
+        <button class="btn-secondary" id="close-profile-btn">Close</button>
+      </div>
+      <div id="profile-modal-content"></div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="logs-modal">
+    <div class="modal-card wide">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3>Complete Audit Logs History</h3>
+        <button class="btn-secondary" id="close-logs-btn">Close</button>
+      </div>
+      <div class="audit-list" id="full-logs-stream" style="max-height: 500px;"></div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = "http://127.0.0.1:8000";
+
+    if (localStorage.getItem("userRole") !== "admin") {
+      window.location.href = "login.html";
+    }
+
+    document.getElementById("admin-name").innerText = localStorage.getItem("userName") || "Master Admin";
+    document.getElementById("logout-btn").addEventListener("click", () => {
+      localStorage.clear();
+      window.location.href = "login.html";
+    });
+
+    const tcModal = document.getElementById("telecaller-modal");
+    document.getElementById("open-add-modal").addEventListener("click", () => tcModal.style.display = "flex");
+    document.getElementById("close-modal-btn").addEventListener("click", () => tcModal.style.display = "none");
+
+    const profileModal = document.getElementById("profile-modal");
+    document.getElementById("close-profile-btn").addEventListener("click", () => profileModal.style.display = "none");
+
+    const logsModal = document.getElementById("logs-modal");
+    document.getElementById("open-logs-modal").addEventListener("click", () => {
+      logsModal.style.display = "flex";
+      loadFullLogs();
+    });
+    document.getElementById("close-logs-btn").addEventListener("click", () => logsModal.style.display = "none");
+
+    let statusChart = null;
+    let conversionChart = null;
+
+    function renderCharts(pending, inProgress, delivered) {
+      const ctxStatus = document.getElementById('statusChart').getContext('2d');
+      const ctxConv = document.getElementById('conversionChart').getContext('2d');
+
+      if (statusChart) statusChart.destroy();
+      if (conversionChart) conversionChart.destroy();
+
+      statusChart = new Chart(ctxStatus, {
+        type: 'bar',
+        data: {
+          labels: ['Pending', 'In Progress', 'Delivered'],
+          datasets: [{
+            label: 'Leads',
+            data: [pending, inProgress, delivered],
+            backgroundColor: ['#ffaa00', '#14aed5', '#76dc00']
+          }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+      });
+
+      conversionChart = new Chart(ctxConv, {
+        type: 'doughnut',
+        data: {
+          labels: ['Converted', 'In Pipeline'],
+          datasets: [{
+            data: [delivered, pending + inProgress],
+            backgroundColor: ['#76dc00', '#222230']
+          }]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+      });
+    }
+
+    document.getElementById("save-tc-btn").addEventListener("click", async () => {
+      const fullName = document.getElementById("new-tc-name").value.trim();
+      const email = document.getElementById("new-tc-email").value.trim();
+      const initialPassword = document.getElementById("new-tc-password").value;
+
+      if (!fullName || !email || !initialPassword) return alert("Fill all fields");
+
+      try {
+        const res = await fetch(`${API_BASE}/api/admin/create-telecaller`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ full_name: fullName, email, initial_password: initialPassword })
+        });
+        if (res.ok) {
+          tcModal.style.display = "none";
+          syncDashboardData();
+        }
+      } catch (e) {
+        alert("Failed to create outreacher.");
+      }
+    });
+
+    async function resetPassword(event, telecallerId) {
+      event.stopPropagation();
+      const newPass = prompt("Enter new password for this outreacher:");
+      if (!newPass) return;
+
+      try {
+        const res = await fetch(`${API_BASE}/api/admin/reset-password`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ telecaller_id: telecallerId, new_password: newPass })
+        });
+        if (res.ok) alert("Password reset successfully!");
+      } catch (e) {
+        alert("Error resetting password.");
+      }
+    }
+
+    async function openOutreacherProfile(userId) {
+      try {
+        const res = await fetch(`${API_BASE}/api/admin/telecaller-details?user_id=${userId}`);
+        const data = await res.json();
+        
+        const profile = data.profile;
+        const leads = data.leads;
+
+        document.getElementById("profile-modal-title").innerText = `${profile.full_name}'s Profile & Allotments`;
+        
+        let leadsHtml = leads.length === 0 
+          ? `<p style="color: #666; margin-top: 10px;">No leads currently allotted to this outreacher.</p>`
+          : `
+            <table style="margin-top: 15px;">
+              <thead>
+                <tr>
+                  <th>Lead Name</th>
+                  <th>Contact Email</th>
+                  <th>Requirements</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${leads.map(l => `
+                  <tr>
+                    <td>${l.name}</td>
+                    <td>${l.email}</td>
+                    <td>${l.requirements}</td>
+                    <td><span style="color: #14aed5; font-weight: 600;">${l.status}</span></td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          `;
+
+        document.getElementById("profile-modal-content").innerHTML = `
+          <div style="background: #0a0a10; padding: 16px; border-radius: 8px; margin-bottom: 16px;">
+            <p><strong>Email:</strong> ${profile.email}</p>
+            <p><strong>Live Presence:</strong> ${profile.is_online ? '<span style="color:#76dc00">● Online (Active Session)</span>' : '<span style="color:#ff4444">○ Offline / Inactive Tab</span>'}</p>
+            <p><strong>Total Allotted Leads:</strong> ${leads.length}</p>
+          </div>
+          <h4 style="color: #dddde3;">Allotted Leads History</h4>
+          ${leadsHtml}
+        `;
+
+        profileModal.style.display = "flex";
+      } catch (e) {
+        alert("Failed to load outreacher profile details.");
+      }
+    }
+
+    async function loadFullLogs() {
+      try {
+        const res = await fetch(`${API_BASE}/api/admin/logs?limit=100`);
+        const data = await res.json();
+        const container = document.getElementById("full-logs-stream");
+        container.innerHTML = data.logs.map(l => `
+          <div class="audit-item">
+            <div class="audit-title">${l.event_type} <span class="audit-time">${new Date(l.created_at || Date.now()).toLocaleString()}</span></div>
+            <div class="audit-desc"><strong>Actor:</strong> ${l.actor} | <strong>Details:</strong> ${JSON.stringify(l.details || {})}</div>
+          </div>
+        `).join('');
+      } catch (e) {
+        console.error("Failed to load logs");
+      }
+    }
+
+    // RIGID 3-SECOND SYNC LOOP
+    async function syncDashboardData() {
+      try {
+        const statsRes = await fetch(`${API_BASE}/api/admin/stats`);
+        const stats = await statsRes.json();
+
+        document.getElementById("stat-total-leads").innerText = stats.total_leads;
+        document.getElementById("stat-telecallers").innerText = stats.active_telecallers;
+        document.getElementById("stat-delivered").innerText = stats.delivered;
+        document.getElementById("stat-pending").innerText = stats.pending;
+
+        renderCharts(stats.pending, stats.in_progress, stats.delivered);
+
+        const teleRes = await fetch(`${API_BASE}/api/admin/telecallers`);
+        const teleData = await teleRes.json();
+        
+        const tbody = document.getElementById("telecallers-table-body");
+        tbody.innerHTML = teleData.telecallers.map(t => `
+          <tr class="clickable-row" onclick="openOutreacherProfile('${t.id}')">
+            <td>${t.full_name}</td>
+            <td>${t.email}</td>
+            <td>
+              <span class="status-badge ${t.is_online ? 'status-active' : 'status-offline'}">
+                ${t.is_online ? '● Online' : '○ Offline'}
+              </span>
+            </td>
+            <td>
+              <button class="btn-sm" onclick="resetPassword(event, '${t.id}')">Reset Pass</button>
+            </td>
+          </tr>
+        `).join('');
+
+        const logsRes = await fetch(`${API_BASE}/api/admin/logs?limit=5`);
+        const logsData = await logsRes.json();
+        const stream = document.getElementById("audit-log-stream");
+        stream.innerHTML = logsData.logs.map(l => `
+          <div class="audit-item">
+            <div class="audit-title">${l.event_type} <span class="audit-time">${new Date(l.created_at || Date.now()).toLocaleTimeString()}</span></div>
+            <div class="audit-desc">${l.actor}: ${JSON.stringify(l.details || {})}</div>
+          </div>
+        `).join('');
+
+      } catch (err) {
+        console.error("Dashboard sync error:", err);
+      }
+    }
+
+    syncDashboardData();
+    setInterval(syncDashboardData, 3000); // Rigid 3-second polling
+  </script>
+</body>
+</html>
