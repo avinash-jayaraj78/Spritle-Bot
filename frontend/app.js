@@ -6,7 +6,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const chatMessages = document.getElementById("chat-messages");
 
   // Endpoint to your FastAPI Backend
-  const BACKEND_URL = "http://127.0.0.1:8000/chat";
+  //const BACKEND_URL = "http://127.0.0.1:8000/chat";
+  const BACKEND_URL = "https://spritle-bot.onrender.com/chat";
   let conversationHistory = [];
 
   // Toggle Collapse/Expand UI
