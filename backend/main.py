@@ -28,7 +28,7 @@ app = FastAPI(title="Spritle CRM & AI Assistant")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["https://spritle-bot-git-main-aj-e4fe.vercel.app/"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
