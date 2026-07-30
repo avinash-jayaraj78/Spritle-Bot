@@ -21,7 +21,8 @@ if not SUPABASE_URL or not SUPABASE_KEY:
 supabase_client: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # Import AI modules
-from test_agents import summarize_requirements_with_llm, extract_contact_info, llm, SYSTEM_CONTEXT
+#from test_agents import summarize_requirements_with_llm, extract_contact_info, llm, SYSTEM_CONTEXT
+from .test_agents import summarize_requirements_with_llm, extract_contact_info, llm, SYSTEM_CONTEXT
 
 app = FastAPI(title="Spritle CRM & AI Assistant")
 
