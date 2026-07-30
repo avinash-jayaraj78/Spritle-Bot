@@ -3,7 +3,7 @@ import re
 import sys
 from dotenv import load_dotenv
 from langchain_groq import ChatGroq
-from utils import sync_new_lead
+from backend.utils import sync_new_lead
 
 load_dotenv()
 
