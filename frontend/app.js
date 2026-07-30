@@ -5,8 +5,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const userInput = document.getElementById("user-input");
   const chatMessages = document.getElementById("chat-messages");
 
-  // Endpoint to your FastAPI Backend
-  //const BACKEND_URL = "http://127.0.0.1:8000/chat";
+  // Live Render Backend Endpoint
   const BACKEND_URL = "https://spritle-bot.onrender.com/chat";
   let conversationHistory = [];
 
